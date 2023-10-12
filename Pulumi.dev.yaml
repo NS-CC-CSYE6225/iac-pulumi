@@ -1,0 +1,14 @@
+encryptionsalt: v1:rAdKuLWXJU4=:v1:fih89n5pB7pAJsw/:YjjaXEsCjwpby/Hzw/UroGXnAJEULg==
+config:
+  aws:region: us-east-1
+  vpcCidrBlock: "10.0.0.0/16"
+  publicCidrBlocks: '["10.0.1.0/24", "10.0.2.0/24", "10.0.3.0/24"]'
+  privateCidrBlocks: '["10.0.11.0/24", "10.0.12.0/24", "10.0.13.0/24"]'
+  publicRouteCidrBlock: "0.0.0.0/0"
+  publicRouteTable: "public-route-table"
+  privateRouteTable: "private-route-table"
+  publicRoute: "publicRoute"
+  publicSubnet: "publicSubnet"
+  privateSubnet: "privateSubnet"
+  publicSubnetAssociation: "publicSubnetAssociation"
+  privateSubnetAssociation: "privateSubnetAssociation"
