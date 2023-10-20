@@ -9,7 +9,7 @@ config:
   port22: "22"
   port80: "80"
   port443: "443"
-  port3001: "3001"
+  port8080: "8080"
   privateRouteTableName: private-route-table
   privateSubnetAssociation: 'private-subnet-association- '
   privateSubnetPrefix: 'private-subnet- '
