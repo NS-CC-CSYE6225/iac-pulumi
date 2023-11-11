@@ -261,7 +261,7 @@ const rdsInstance = new aws.rds.Instance("rds-instance", {
 
 const devUserDataJson = pulumi.interpolate`#!/bin/bash
 # Define the file path
-devJsonFile="/home/admin/webapp1/config/config.json";
+devJsonFile="/opt/csye6225/webapp1/config/config.json";
 
 # Wipe out existing data if the file exists
 if [ -f "$devJsonFile" ]; then
@@ -285,14 +285,39 @@ echo '      }' >> "$devJsonFile"
 echo '    }' >> "$devJsonFile"
 echo '  }' >> "$devJsonFile"
 echo "}" >> "$devJsonFile"
+
+# Fetch the latest CloudWatch agent configuration and start the agent
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s
+sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a start
+
+sudo systemctl start systemd.service
+
+sudo chown -R csye6225:csye6225 /opt/csye6225/webapp1
+
 `;
 
 console.log(devUserDataJson);
 
+// Define the IAM role with CloudWatchAgentServer policy
+const roleIAM = new aws.iam.Role("CloudWatch_Dev", {
+    assumeRolePolicy: aws.iam.assumeRolePolicyForPrincipal({
+        Service: "ec2.amazonaws.com",
+    }),
+});
+
+// Attach the CloudWatchAgentServer policy to the role
+const policyAttachment = new aws.iam.RolePolicyAttachment("CloudWatchAgentServerPolicyAttachment", {
+    role: roleIAM.name,
+    policyArn: "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+});
+
+const instanceProfile = new aws.iam.InstanceProfile("ec2InstanceProfile", {
+    role: roleIAM.name,
+});
 
 const instance = new aws.ec2.Instance("myEc2Instance", {
     ami: amiId, 
-    instanceType: "t3.medium", 
+    instanceType: "t3.medium",
     vpcSecurityGroupIds: [applicationSecurityGroup.id], 
     subnetId: publicSubnets[0].id, 
     rootBlockDevice: {
@@ -305,8 +330,20 @@ const instance = new aws.ec2.Instance("myEc2Instance", {
     disableApiTermination: false,
     keyName: keyPairName,
     tags: { Name: "MyEC2Instance" },
+    iamInstanceProfile: instanceProfile.name,
 
 });
+
+const hostedZone = aws.route53.getZone({ name: "dev.aravindsankar.cloud." }, { async: true }).then(zone => zone.id);
+
+hostedZone.then(zoneId => { new aws.route53.Record("dev.aravindsankar.cloud", {
+    name: "dev.aravindsankar.cloud",
+    type: "A",
+    zoneId: zoneId,
+    records: [instance.publicIp],
+    ttl: 300,
+  });
+});  
 
 export const rdsInstanceId = rdsInstance.id;
 
