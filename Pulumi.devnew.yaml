@@ -2,7 +2,7 @@ encryptionsalt: v1:7vEXYfcHA+I=:v1:I61DcoPQjpQT/q3i:kUHA5d5uedptaJwmip2Bzt8dRl1n
 config:
   aws:profile: dev
   aws:region: us-east-1
-  amiId: ami-0ace5aed2672b8864
+  amiId: ami-0a8b0f3c83d112d42
   baseCidrBlock: 10.0.0.0/18
   destinationCidrBlock: 0.0.0.0/0
   igwName: csye6225-igw
