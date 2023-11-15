@@ -114,6 +114,16 @@ export const vpcId = vpc.id;
 export const publicSubnetIds = publicSubnets.apply(subnets => subnets.map(subnet => subnet.id));
 export const privateSubnetIds = privateSubnets.apply(subnets => subnets.map(subnet => subnet.id));
 
+export const loadBalancerSecurityGroup = new aws.ec2.SecurityGroup("loadbalancer-security-group", {
+    description: "Security group for Load Balancer",
+    vpcId: vpc.id,
+    ingress: [
+        { protocol: "tcp", fromPort: 80, toPort: 80, cidrBlocks: ["0.0.0.0/0"] },
+        { protocol: "tcp", fromPort: 443, toPort: 443, cidrBlocks: ["0.0.0.0/0"] },
+    ],
+    egress: [{ protocol: "-1", fromPort: 0, toPort: 0, cidrBlocks: ["0.0.0.0/0"] }],
+    tags: { Name: "Csye6255-loadbalancer-security-group" },
+});
 
 const applicationSecurityGroup = new aws.ec2.SecurityGroup("applicationSecurityGroup", {
     vpcId: vpc.id,
@@ -128,18 +138,18 @@ const ingressRules = [
         protocol: "tcp",
         cidrBlocks: [destinationCidrBlock],
     },
-    {
-        fromPort: 80,
-        toPort: 80,
-        protocol: "tcp",
-        cidrBlocks: [destinationCidrBlock],
-    },
-    {
-        fromPort: 443,
-        toPort: 443,
-        protocol: "tcp",
-        cidrBlocks: [destinationCidrBlock],
-    },
+    // {
+    //     fromPort: 80,
+    //     toPort: 80,
+    //     protocol: "tcp",
+    //     cidrBlocks: [destinationCidrBlock],
+    // },
+    // {
+    //     fromPort: 443,
+    //     toPort: 443,
+    //     protocol: "tcp",
+    //     cidrBlocks: [destinationCidrBlock],
+    // },
     {
         fromPort: 8080,
         toPort: 8080,
@@ -315,23 +325,156 @@ const instanceProfile = new aws.iam.InstanceProfile("ec2InstanceProfile", {
     role: roleIAM.name,
 });
 
-const instance = new aws.ec2.Instance("myEc2Instance", {
-    ami: amiId, 
+// const instance = new aws.ec2.Instance("myEc2Instance", {
+//     ami: amiId, 
+//     instanceType: "t3.medium",
+//     vpcSecurityGroupIds: [applicationSecurityGroup.id], 
+//     subnetId: publicSubnets[0].id, 
+//     rootBlockDevice: {
+//         volumeSize: 25,
+//         volumeType: "gp2",
+//         deleteOnTermination: true,
+//     },
+
+//     userData: devUserDataJson,
+//     disableApiTermination: false,
+//     keyName: keyPairName,
+//     tags: { Name: "MyEC2Instance" },
+//     iamInstanceProfile: instanceProfile.name,
+
+// });
+
+export const alb = new aws.lb.LoadBalancer("app-lb", {
+    internal: false,
+    loadBalancerType: "application",
+    securityGroups: [loadBalancerSecurityGroup.id],
+    subnets: publicSubnets.apply(subnets => subnets.map(subnet => subnet.id)),
+    enableDeletionProtection: false,
+});
+
+const launchTemplate = new aws.ec2.LaunchTemplate("myLaunchTemplate", {
+    name: "my-launch-template",
+    imageId:amiId,
+    description: "My Launch Template",
+    blockDeviceMappings: [{
+        deviceName: "/dev/xvda",
+        ebs: {
+            volumeSize: 25,
+            volumeType: "gp2",
+            deleteOnTermination: 'true',
+        },
+    }],
     instanceType: "t3.medium",
-    vpcSecurityGroupIds: [applicationSecurityGroup.id], 
-    subnetId: publicSubnets[0].id, 
-    rootBlockDevice: {
-        volumeSize: 25,
-        volumeType: "gp2",
-        deleteOnTermination: true,
-    },
-
-    userData: devUserDataJson,
-    disableApiTermination: false,
     keyName: keyPairName,
-    tags: { Name: "MyEC2Instance" },
-    iamInstanceProfile: instanceProfile.name,
+    networkInterfaces: [{
+        deviceIndex: 0,
+        associatePublicIpAddress:  'true',
+        securityGroups: [applicationSecurityGroup.id],
+        subnetId: publicSubnets[0].id,
+    }],
+    tagSpecifications: [{
+        resourceType: "instance",
+        tags: {
+            Name: "Csye6255-Aravind",
+        },
+    }],
+    userData:  pulumi.interpolate`${devUserDataJson.apply((s) =>
+        Buffer.from(s).toString("base64")
+      )}`,
+    iamInstanceProfile: {
+        name: instanceProfile.name,
+    },
+    disableApiTermination:false
+},{dependsOn: [keyPair,rdsInstance]});
 
+const targetGroup = new aws.alb.TargetGroup("targetGroup",{
+    port:8080,
+    protocol:'HTTP',
+    vpcId:vpc.id,
+    targetType:'instance',
+    healthCheck:{
+      enabled:true,
+      path:'/healthz',
+      protocol:'HTTP',
+      port:'8080',
+      timeout:25
+  
+    }
+  })
+
+const listener = new aws.alb.Listener("listener",{
+   loadBalancerArn:alb.arn,
+   port:80,
+   defaultActions:[{
+     type:'forward',
+     targetGroupArn:targetGroup.arn
+   }]
+ })
+
+
+   // Create an Auto Scaling group
+const autoScalingGroup = new aws.autoscaling.Group("myAutoScalingGroup", {
+    launchTemplate: {
+        id: launchTemplate.id,
+        version: "$Latest", // Use the latest version of the launch template
+    },
+    minSize: 1,
+    maxSize: 3,
+    desiredCapacity: 1,
+    targetGroupArns:[targetGroup.arn],
+    vpcZoneIdentifiers: [publicSubnets[0].id,publicSubnets[1].id,publicSubnets[2].id], // Subnet IDs where instances will be launched // Get availability zones
+    tags: [{
+        key: "Name",
+        value: "Csye6255-Aravind",
+        propagateAtLaunch: true,
+    }],
+});
+
+// Define scaling policies
+const scaleUpPolicy = new aws.autoscaling.Policy("scaleUpPolicy", {
+    autoscalingGroupName: autoScalingGroup.name,
+    adjustmentType: "ChangeInCapacity",
+    policyType: "SimpleScaling",
+    scalingAdjustment: 1,
+    cooldown: 60,
+});
+
+const scaleDownPolicy = new aws.autoscaling.Policy("scaleDownPolicy", {
+    autoscalingGroupName: autoScalingGroup.name,
+    adjustmentType: "ChangeInCapacity",
+    policyType: "SimpleScaling",
+    scalingAdjustment: -1,
+    cooldown: 300,
+});
+
+// CloudWatch Alert for Scale Up
+const scaleUpAlarm = new aws.cloudwatch.MetricAlarm("scaleUpAlarm", {
+    comparisonOperator: "GreaterThanOrEqualToThreshold",
+    evaluationPeriods: 1,
+    metricName: "CPUUtilization",
+    namespace: "AWS/EC2",
+    period: 60,
+    statistic: "Average",
+    threshold: 5,
+    alarmActions: [scaleUpPolicy.arn],
+    dimensions: {
+        AutoScalingGroupName: autoScalingGroup.name,
+    },
+});
+
+// CloudWatch Alert for Scale Down
+const scaleDownAlarm = new aws.cloudwatch.MetricAlarm("scaleDownAlarm", {
+    comparisonOperator: "LessThanOrEqualToThreshold",
+    evaluationPeriods: 1,
+    metricName: "CPUUtilization",
+    namespace: "AWS/EC2",
+    period: 60,
+    statistic: "Average",
+    threshold: 3,
+    alarmActions: [scaleDownPolicy.arn],
+    dimensions: {
+        AutoScalingGroupName: autoScalingGroup.name,
+    },
 });
 
 const hostedZone = aws.route53.getZone({ name: "dev.aravindsankar.cloud." }, { async: true }).then(zone => zone.id);
@@ -340,11 +483,17 @@ hostedZone.then(zoneId => { new aws.route53.Record("dev.aravindsankar.cloud", {
     name: "dev.aravindsankar.cloud",
     type: "A",
     zoneId: zoneId,
-    records: [instance.publicIp],
-    ttl: 300,
+    // records: [instance.publicIp],
+    // ttl: 300,
+    aliases:[
+        {
+          name:alb.dnsName,
+          zoneId:alb.zoneId,
+          evaluateTargetHealth:true
+        }]
   });
 });  
 
 export const rdsInstanceId = rdsInstance.id;
 
-export const ec2InstanceId = instance.id;
+// export const ec2InstanceId = instance.id;
