@@ -2,19 +2,25 @@ encryptionsalt: v1:7vEXYfcHA+I=:v1:I61DcoPQjpQT/q3i:kUHA5d5uedptaJwmip2Bzt8dRl1n
 config:
   aws:profile: dev
   aws:region: us-east-1
-  amiId: ami-058fd22dbb670b738
-  baseCidrBlock: 10.0.0.0/18
-  destinationCidrBlock: 0.0.0.0/0
-  igwName: csye6225-igw
-  port22: "22"
-  port80: "80"
-  port443: "443"
-  port8080: "8080"
-  privateRouteTableName: private-route-table
-  privateSubnetAssociation: 'private-subnet-association- '
-  privateSubnetPrefix: 'private-subnet- '
-  publicRouteTableName: public-route-table
-  publicSubnetAssociation: 'public-subnet-association- '
-  publicSubnetPrefix: 'public-subnet- '
-  vpcCidr: 10.0.0.0/16
-  vpcName: csye6225-vpc
+  gcp:project: mycloudproject-dev
+  pulumi-aws:amiId: ami-057a63e568dddee89
+  pulumi-aws:baseCidrBlock: 10.0.0.0/18
+  pulumi-aws:destinationCidrBlock: 0.0.0.0/0
+  pulumi-aws:fileArchive: /Users/aravindsankars/Desktop/serverless/serverless
+  pulumi-aws:hzoneName: dev.aravindsankar.cloud
+  pulumi-aws:igwName: csye6225-igw
+  pulumi-aws:mailgunApiKey: 5c7f79787ad964d56fa0150987b04dd2-30b58138-7e5ad676
+  pulumi-aws:mailgunDomain: aravindsankar.cloud
+  pulumi-aws:port22: "22"
+  pulumi-aws:port80: "80"
+  pulumi-aws:port443: "443"
+  pulumi-aws:port8080: "8080"
+  pulumi-aws:privateRouteTableName: private-route-table
+  pulumi-aws:privateSubnetAssociation: 'private-subnet-association- '
+  pulumi-aws:privateSubnetPrefix: 'private-subnet- '
+  pulumi-aws:project: mycloudproject-dev
+  pulumi-aws:publicRouteTableName: public-route-table
+  pulumi-aws:publicSubnetAssociation: 'public-subnet-association- '
+  pulumi-aws:publicSubnetPrefix: 'public-subnet- '
+  pulumi-aws:vpcCidr: 10.0.0.0/16
+  pulumi-aws:vpcName: csye6225-vpc
