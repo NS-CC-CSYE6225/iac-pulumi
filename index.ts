@@ -482,7 +482,6 @@ echo '    "password": "${rdsInstance.password}",' >> "$devJsonFile"
 echo '    "database": "${rdsInstance.dbName}",' >> "$devJsonFile"
 echo '    "dialect": "mysql",' >> "$devJsonFile"
 echo '    "port": 3306,' >> "$devJsonFile"
-echo '    "port": 5432,' >> "$devJsonFile"
 echo '    "TOPIC_ARN": "${snsTopicArn}",' >> "$devJsonFile"
 echo '    "dialectOptions": {' >> "$devJsonFile"
 echo '      "ssl": {' >> "$devJsonFile"
@@ -561,9 +560,13 @@ const targetGroup = new aws.alb.TargetGroup("targetGroup",{
     }
   })
 
+const certificateArn = config.require("certificateArn")
+
 const listener = new aws.alb.Listener("listener",{
    loadBalancerArn:alb.arn,
-   port:80,
+   certificateArn: certificateArn,
+   port:443,
+   protocol: "HTTPS",
    defaultActions:[{
      type:'forward',
      targetGroupArn:targetGroup.arn
@@ -637,10 +640,11 @@ const scaleDownAlarm = new aws.cloudwatch.MetricAlarm("scaleDownAlarm", {
 });
 
 const hzoneName = config.require("hzoneName");
+const hz = config.require("hz");
 const hostedZone = aws.route53.getZone({ name: hzoneName }, { async: true });
 
-hostedZone.then(zoneId => { new aws.route53.Record("Record", {
-    name: zoneId.name,
+hostedZone.then(zoneId => { new aws.route53.Record(hz, {
+    name: hz,
     zoneId: zoneId.id,
     type: "A",
 
