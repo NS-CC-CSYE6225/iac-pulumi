@@ -1,13 +1,15 @@
-encryptionsalt: v1:7vEXYfcHA+I=:v1:I61DcoPQjpQT/q3i:kUHA5d5uedptaJwmip2Bzt8dRl1nqw==
+encryptionsalt: v1:l49LrqiMKkQ=:v1:/HtyGZ6Qstr3iao5:xhsegYJqnZaIUnTPPhjqdym2e5/zgA==
 config:
-  aws:profile: dev
+  aws:profile: demo1
   aws:region: us-east-1
-  gcp:project: mycloudproject-dev
+  gcp:project: mycloudproject-demo
   pulumi-aws:amiId: ami-0bb58d4dc422045b5
   pulumi-aws:baseCidrBlock: 10.0.0.0/18
+  pulumi-aws:certificateArn: arn:aws:acm:us-east-1:644559974701:certificate/bc085805-8f61-4cd1-847e-4cff299aeb60
   pulumi-aws:destinationCidrBlock: 0.0.0.0/0
   pulumi-aws:fileArchive: /Users/aravindsankars/Desktop/serverless/serverless
-  pulumi-aws:hzoneName: dev.aravindsankar.cloud
+  pulumi-aws:hz: demo.aravindsankar.cloud
+  pulumi-aws:hzoneName: demo.aravindsankar.cloud.
   pulumi-aws:igwName: csye6225-igw
   pulumi-aws:mailgunApiKey: 5c7f79787ad964d56fa0150987b04dd2-30b58138-7e5ad676
   pulumi-aws:mailgunDomain: aravindsankar.cloud
@@ -18,10 +20,9 @@ config:
   pulumi-aws:privateRouteTableName: private-route-table
   pulumi-aws:privateSubnetAssociation: 'private-subnet-association- '
   pulumi-aws:privateSubnetPrefix: 'private-subnet- '
-  pulumi-aws:project: mycloudproject-dev
+  pulumi-aws:project: mycloudproject-demo
   pulumi-aws:publicRouteTableName: public-route-table
   pulumi-aws:publicSubnetAssociation: 'public-subnet-association- '
   pulumi-aws:publicSubnetPrefix: 'public-subnet- '
   pulumi-aws:vpcCidr: 10.0.0.0/16
   pulumi-aws:vpcName: csye6225-vpc
-  certificateArn: arn:aws:acm:us-east-1:184985182931:certificate/9e4f6697-88c0-41fd-9cc7-6a0e9e4711a7

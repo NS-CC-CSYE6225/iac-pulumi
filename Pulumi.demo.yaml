@@ -1,0 +1,28 @@
+encryptionsalt: v1:qNyWNtlIYcw=:v1:ua+IB6xUtz/TrOrF:Sm+N5d15RuND/hPPFv7WEyRohp/1Bg==
+config:
+  aws:profile: demo1
+  aws:region: us-east-1
+  gcp:project: mycloudproject-demo
+  amiId: ami-0bb58d4dc422045b5
+  baseCidrBlock: 10.0.0.0/18
+  destinationCidrBlock: 0.0.0.0/0
+  fileArchive: /Users/aravindsankars/Desktop/serverless/serverless
+  hzoneName: demo.aravindsankar.cloud.
+  hz: demo.aravindsankar.cloud
+  igwName: csye6225-igw
+  mailgunApiKey: 5c7f79787ad964d56fa0150987b04dd2-30b58138-7e5ad676
+  mailgunDomain: aravindsankar.cloud
+  port22: "22"
+  port80: "80"
+  port443: "443"
+  port8080: "8080"
+  privateRouteTableName: private-route-table
+  privateSubnetAssociation: 'private-subnet-association- '
+  privateSubnetPrefix: 'private-subnet- '
+  project: mycloudproject-demo
+  publicRouteTableName: public-route-table
+  publicSubnetAssociation: 'public-subnet-association- '
+  publicSubnetPrefix: 'public-subnet- '
+  vpcCidr: 10.0.0.0/16
+  vpcName: csye6225-vpc
+  certificateArn: arn:aws:acm:us-east-1:184985182931:certificate/9e4f6697-88c0-41fd-9cc7-6a0e9e4711a7
